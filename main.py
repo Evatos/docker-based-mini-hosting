@@ -8,7 +8,7 @@ client = docker.from_env()
 ALLOWED_IMAGES = {
     "alpine": "alpine:latest",
     "ubuntu": "ubuntu:22.04",
-    "ngix": "ngix:alpine",
+    "nginx": "nginx:alpine",
 }
 
 
