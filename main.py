@@ -69,7 +69,7 @@ def run_container(body: RunRequest):
             "user": body.user,
 
             "traefik.enable": "true",
-            f"traefik.http.routers.{router_name}.rule": f"Host({body.user}.localhost)",
+            f"traefik.http.routers.{router_name}.rule": f"Host(`{body.user}.localhost`)",
             f"traefik.http.services.{router_name}.loadbalancer.server.port": "80",
             f"traefik.http.routers.{router_name}.entrypoints": "web",
         }
