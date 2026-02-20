@@ -19,11 +19,15 @@
 ## Запуск
 
 ### Локально
+```bash
 pip install fastapi uvicorn docker
 uvicorn main:app --reload --port 5000
+```
 
 ### Через Docker Compose (Linux / WSL2)
+```bash
 docker compose up --build
+```
 
 ## Открыть документацию
 http://localhost:5000/docs
