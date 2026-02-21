@@ -14,12 +14,15 @@
 
 - Python, FastAPI
 - Docker SDK for Python
-- Docker (Docker Outside of Docker через сокет)
+- SQLAlchemy + SQLite
+- JWT (python-jose) + bcrypt
+- Traefik reverse-proxy (Linux/WSL2)
 
 ## Запуск
 
 ### Локально
 ```bash
+p .env.example .env  # fill your SECRET_KEY
 pip install fastapi uvicorn docker
 uvicorn main:app --reload --port 5000
 ```
@@ -34,10 +37,15 @@ http://localhost:5000/docs
 
 ## API
 
-POST /containers/run  — запустить контейнер
-GET  /containers      — список контейнеров
-DELETE /containers/id — остановить контейнер
-POST /cleanup         — удалить остановленные контейнеры и пустые сети
+### Авторизация
+POST /auth/register  — регистрация
+POST /auth/login     — логин, возвращает JWT токен
+
+### Контейнеры (требуют токен)
+POST   /containers/run       — запустить контейнер
+GET    /containers            — список своих контейнеров
+DELETE /containers/{id}      — остановить контейнер
+POST   /cleanup              — удалить остановленные контейнеры
 GET /networks         — список сетей
 
 ## Архитектура
