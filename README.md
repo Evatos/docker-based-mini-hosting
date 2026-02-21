@@ -38,15 +38,15 @@ http://localhost:5000/docs
 ## API
 
 ### Авторизация
-POST /auth/register  — регистрация
-POST /auth/login     — логин, возвращает JWT токен
+- POST /auth/register  — регистрация
+- POST /auth/login     — логин, возвращает JWT токен
 
 ### Контейнеры (требуют токен)
-POST   /containers/run       — запустить контейнер
-GET    /containers            — список своих контейнеров
-DELETE /containers/{id}      — остановить контейнер
-POST   /cleanup              — удалить остановленные контейнеры
-GET /networks         — список сетей
+- POST   /containers/run       — запустить контейнер
+- GET    /containers            — список своих контейнеров
+- DELETE /containers/{id}      — остановить контейнер
+- POST   /cleanup              — удалить остановленные контейнеры
+- GET /networks         — список сетей
 
 ## Архитектура
 
