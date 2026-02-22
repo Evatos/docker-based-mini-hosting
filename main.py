@@ -6,8 +6,12 @@ from sqlalchemy.orm import Session
 from database import User, get_db
 from auth import hash_password, verify_password, create_token, get_current_user
 from fastapi import Depends
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
+
+Instrumentator().instrument(app).expose(app)
+
 client = docker.from_env()
 
 ALLOWED_IMAGES = {

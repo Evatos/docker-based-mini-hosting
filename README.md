@@ -33,7 +33,7 @@ docker compose up --build
 ```
 
 ## Открыть документацию
-http://localhost:5000/docs
+http://localhost:5000/docs~~~~
 
 ## API
 
@@ -43,10 +43,10 @@ http://localhost:5000/docs
 
 ### Контейнеры (требуют токен)
 - POST   /containers/run       — запустить контейнер
-- GET    /containers            — список своих контейнеров
+- GET    /containers           — список своих контейнеров
 - DELETE /containers/{id}      — остановить контейнер
 - POST   /cleanup              — удалить остановленные контейнеры
-- GET /networks         — список сетей
+- GET    /networks             — список сетей
 
 ## Архитектура
 
