@@ -1,4 +1,6 @@
 import docker
+import time
+import threading
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,6 +9,8 @@ from database import User, get_db
 from auth import hash_password, verify_password, create_token, get_current_user
 from fastapi import Depends
 from prometheus_fastapi_instrumentator import Instrumentator
+
+CONTAITER_TTL = 60
 
 app = FastAPI()
 
@@ -19,6 +23,30 @@ ALLOWED_IMAGES = {
     "ubuntu": "ubuntu:22.04",
     "nginx": "nginx:alpine",
 }
+
+
+def cleanup_expired_containers():
+    """Фоновый поток который каждую минуту чистит истёкшие контейнеры."""
+    while True:
+        try:
+            containers = client.containers.list(
+                filters={"label": "managed-by=mini-hosting"}
+            )
+            now = int(time.time())
+            for c in containers:
+                expires_at = int(c.labels.get("expires-at", 0))
+                if expires_at and now > expires_at:
+                    logger.info(f"TTL истёк: останавливаем {c.name}")
+                    c.stop(timeout=5)
+                    c.remove()
+        except Exception as e:
+            logger.error(f"Ошибка в cleanup потоке: {e}")
+
+        time.sleep(60)
+
+
+thread = threading.Thread(target=cleanup_expired_containers, daemon=True)
+thread.start()
 
 
 def get_or_create_network(user: str):
@@ -108,6 +136,7 @@ def run_container(
         labels={
             "managed-by": "mini-hosting",
             "user": user,
+            "expires-at": str(int(time.time()) + CONTAITER_TTL),
             "traefik.enable": "true",
             f"traefik.http.routers.{router_name}.rule": f"Host(`{body.user}.localhost`)",
             f"traefik.http.services.{router_name}.loadbalancer.server.port": "80",
