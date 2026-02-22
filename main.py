@@ -1,6 +1,7 @@
 import docker
 import time
 import threading
+import socket
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordRequestForm
@@ -22,7 +23,14 @@ ALLOWED_IMAGES = {
     "alpine": "alpine:latest",
     "ubuntu": "ubuntu:22.04",
     "nginx": "nginx:alpine",
+    "sandbox": "sandbox:latest",
 }
+
+
+def get_free_port():
+    with socket.socket() as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 def cleanup_expired_containers():
@@ -40,7 +48,7 @@ def cleanup_expired_containers():
                     c.stop(timeout=5)
                     c.remove()
         except Exception as e:
-            logger.error(f"Ошибка в cleanup потоке: {e}")
+            raise HTTPException(status_code=404, detail="контейнер не найден")
 
         time.sleep(60)
 
@@ -122,10 +130,11 @@ def run_container(
     image = ALLOWED_IMAGES[body.image]
     network = get_or_create_network(user)
     router_name = f"sandbox-{user}"
+    ttyd_port = get_free_port()
 
     container = client.containers.run(
         image=image,
-        command="sleep 60",
+        command=f"ttyd -p 7681 -o bash",
         detach=True,
         network=network.name,
         mem_limit="128m",
@@ -133,12 +142,13 @@ def run_container(
         cpu_quota=50000,
         privileged=False,
         cap_drop=["ALL"],
+        ports={"7681/tcp": ttyd_port},
         labels={
             "managed-by": "mini-hosting",
             "user": user,
             "expires-at": str(int(time.time()) + CONTAITER_TTL),
             "traefik.enable": "true",
-            f"traefik.http.routers.{router_name}.rule": f"Host(`{body.user}.localhost`)",
+            f"traefik.http.routers.{router_name}.rule": f"Host(`{user}.localhost`)",
             f"traefik.http.services.{router_name}.loadbalancer.server.port": "80",
             f"traefik.http.routers.{router_name}.entrypoints": "web",
         }
@@ -151,6 +161,7 @@ def run_container(
         "image": image,
         "network": network.name,
         "url": f"http://{user}.localhost",
+        "terminal_url": f"http://localhost:{ttyd_port}",
     }
 
 
