@@ -211,3 +211,18 @@ def cleanup(current_user: User = Depends(get_current_user)):
         "removed_containers": removed_containers,
         "removed_networks": removed_networks,
     }
+
+
+@app.get("/health")
+def health_check(urrent_user: User = Depends(get_current_user)):
+
+    try:
+        client.ping()
+        docker_status = "ok"
+    except Exception:
+        docker_status = "unavailable"
+
+    return {
+        "status": "ok",
+        "docker": docker_status,
+    }
