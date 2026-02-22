@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "mini-hosting"
+    static_configs:
+      - targets: ["api:5000"]

@@ -1,9 +1,10 @@
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.11
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
       - --api.dashboard=true
       - --api.insecure=true
       - --entrypoints.web.address=:80
@@ -23,3 +24,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - traefik
+      
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus

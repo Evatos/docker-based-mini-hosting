@@ -1,4 +1,9 @@
 fastapi
 uvicorn
 docker
-logging
+python-jose[cryptography]
+bcrypt
+sqlalchemy
+python-dotenv
+python-multipart
+prometheus-fastapi-instrumentator

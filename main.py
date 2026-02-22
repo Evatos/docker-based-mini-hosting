@@ -109,7 +109,7 @@ def run_container(
             "managed-by": "mini-hosting",
             "user": user,
             "traefik.enable": "true",
-            f"traefik.http.routers.{router_name}.rule": f"Host({user}.localhost)",
+            f"traefik.http.routers.{router_name}.rule": f"Host(`{body.user}.localhost`)",
             f"traefik.http.services.{router_name}.loadbalancer.server.port": "80",
             f"traefik.http.routers.{router_name}.entrypoints": "web",
         }
