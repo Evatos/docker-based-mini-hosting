@@ -1,23 +1,19 @@
 import bcrypt
-import os
 from datetime import datetime, timedelta, UTC
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from dotenv import load_dotenv
 
-from database import User, get_db
-
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key")
-ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MINUTES", "60"))
+from app.config import SECRET_KEY, ALGORITHM, TOKEN_EXPIRE_MINUTES
+from app.db import User, get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
 
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
