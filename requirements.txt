@@ -7,3 +7,4 @@ sqlalchemy
 python-dotenv
 python-multipart
 prometheus-fastapi-instrumentator
+slowapi

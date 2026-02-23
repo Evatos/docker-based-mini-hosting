@@ -2,22 +2,37 @@ import docker
 import time
 import threading
 import socket
+import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import User, get_db
 from auth import hash_password, verify_password, create_token, get_current_user
-from fastapi import Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 
 CONTAITER_TTL = 60
+MAX_CONTAINERS_PER_USER = 3
 
 app = FastAPI()
 
 Instrumentator().instrument(app).expose(app)
 
 client = docker.from_env()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+logging.basicConfig(
+    level.logging.INFO,
+    format="%(actime)s %(levelname)s %(message)s "
+)
 
 ALLOWED_IMAGES = {
     "alpine": "alpine:latest",
@@ -114,12 +129,23 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 
 @app.post("/containers/run", status_code=201)
+@limiter.limit("5/minute")
 def run_container(
+        request: Request,
         body: RunRequest,
         current_user: User = Depends(get_current_user),
 ):
 
     user = current_user.username
+
+    user_containers = client.containers.list(
+        filters={"label": f"user={user}"}
+    )
+    if len(user_containers) >= MAX_CONTAINERS_PER_USER:
+        raise HTTPException(
+            status_code=429,
+            detail=f"максимум {MAX_CONTAINERS_PER_USER} контейнера на пользователя"
+        )
 
     if body.image not in ALLOWED_IMAGES:
         raise HTTPException(status_code=400, detail={
